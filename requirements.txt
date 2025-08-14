@@ -7,4 +7,3 @@ PyJWT
 gunicorn
 flask-marshmallow
 marshmallow
-micropython-fcntl
