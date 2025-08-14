@@ -1,5 +1,5 @@
 # app/__init__.py
-from flask import Flask
+from flask import Flask, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
 from app.config import Config
@@ -34,5 +34,10 @@ def create_app():
 
     register_extensions(app)
     register_blueprints(app)
+
+    # Add a simple root route for health check
+    @app.route('/')
+    def index():
+        return jsonify({"status": "online", "message": "Welcome to the Beauty Product Management API!"})
 
     return app

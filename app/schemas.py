@@ -1,6 +1,24 @@
 # app/schemas.py
 from marshmallow import Schema, fields, validate
 
+class AdminSchema(Schema):
+    """Schema for validating new admin registration data."""
+    name = fields.Str(required=True, error_messages={"required": "Name is required."})
+    password = fields.Str(required=True, error_messages={"required": "Password is required."})
+    # Phone is a string to allow for various formats (+, -, etc.)
+    phone = fields.Str(required=True, error_messages={"required": "Phone is required."})
+
+class CustomerSchema(Schema):
+    """Schema for validating new customer registration data."""
+    name = fields.Str(required=True, error_messages={"required": "Name is required."})
+    password = fields.Str(required=True, error_messages={"required": "Password is required."})
+    phone = fields.Str(required=True, error_messages={"required": "Phone is required."})
+
+class LoginSchema(Schema):
+    """Schema for validating login data for both admins and customers."""
+    name = fields.Str(required=True, error_messages={"required": "Name is required."})
+    password = fields.Str(required=True, error_messages={"required": "Password is required."})
+
 class ProductSchema(Schema):
     """
     Schema for validating new product data.
@@ -8,7 +26,7 @@ class ProductSchema(Schema):
     """
     name = fields.Str(required=True, error_messages={"required": "Name is required."})
     about = fields.Str(required=True, error_messages={"required": "About is required."})
-    prize = fields.Number(required=True, error_messages={"required": "Prize is required."})
+    prize = fields.Float(required=True, error_messages={"required": "Prize is required."})
     gender = fields.Str(
         required=True,
         validate=validate.OneOf(["Men", "Woman"], error="Gender must be 'Men' or 'Woman'."),

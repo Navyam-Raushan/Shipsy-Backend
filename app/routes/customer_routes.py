@@ -5,49 +5,25 @@ import logging
 
 from app.extensions import mongo, bcrypt
 from app.middlewares.jwt import generate_access_token, generate_refresh_token
+from app.schemas import CustomerSchema, LoginSchema
+from app.utils import _populate_admin_details
 
 customer_bp = Blueprint('customer_bp', __name__)
-
-# --- Helper function to replicate Mongoose's .populate() ---
-def _populate_admin_details(products):
-    """
-    Efficiently fetches admin details for a list of products.
-    This avoids making a separate DB query for each product.
-    """
-    admin_ids = {product.get('adminId') for product in products if product.get('adminId')}
-    if not admin_ids:
-        return products
-
-    # Convert string IDs to ObjectIds for the query
-    admin_object_ids = [ObjectId(admin_id) for admin_id in admin_ids]
-    
-    # Fetch all required admins in a single query
-    admins = mongo.db.admins.find(
-        {"_id": {"$in": admin_object_ids}},
-        {"name": 1, "phone": 1} # Projection to get only name and phone
-    )
-
-    # Create a mapping from admin ID to admin details
-    admin_map = {str(admin['_id']): {"name": admin.get('name'), "phone": admin.get('phone')} for admin in admins}
-
-    # Attach admin details to each product
-    for product in products:
-        admin_id = product.get('adminId')
-        if admin_id in admin_map:
-            product['adminDetails'] = admin_map[admin_id]
-    
-    return products
 
 # --- Auth Routes ---
 
 @customer_bp.route('/register', methods=['POST'])
 def register_customer():
     """Registers a new customer."""
-    data = request.get_json()
-    if not data or not data.get('name') or not data.get('password') or not data.get('phone'):
-        return jsonify({"error": "Name, password, and phone are required."}), 400
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"error": "Request body cannot be empty."}), 400
 
-    name = data.get('name')
+    errors = CustomerSchema().validate(data)
+    if errors:
+        return jsonify({"errors": errors}), 400
+
+    name = data['name']
     if mongo.db.customers.find_one({"name": name}):
         return jsonify({"error": "Customer with this name already exists."}), 409
 
@@ -56,7 +32,7 @@ def register_customer():
         mongo.db.customers.insert_one({
             "name": name,
             "password": hashed_password,
-            "phone": data.get('phone'),
+            "phone": data['phone'],
             "role": "customer" # Assign role for clarity
         })
         return jsonify({"message": "Customer registered successfully."}), 201
@@ -67,9 +43,13 @@ def register_customer():
 @customer_bp.route('/login', methods=['POST'])
 def login_customer():
     """Logs in a customer and returns tokens."""
-    data = request.get_json()
-    if not data or not data.get('name') or not data.get('password'):
-        return jsonify({"error": "Name and password are required."}), 400
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"error": "Request body cannot be empty."}), 400
+
+    errors = LoginSchema().validate(data)
+    if errors:
+        return jsonify({"errors": errors}), 400
 
     try:
         customer = mongo.db.customers.find_one({"name": data.get('name')})

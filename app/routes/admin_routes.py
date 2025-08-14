@@ -11,7 +11,8 @@ from app.middlewares.jwt import (
     generate_refresh_token
 )
 # Import the new schema for validation
-from app.schemas import ProductSchema
+from app.schemas import ProductSchema, AdminSchema, LoginSchema
+from app.utils import _populate_admin_details # Import the helper
 
 
 admin_bp = Blueprint('admin_bp', __name__)
@@ -32,13 +33,15 @@ def admin_required(f):
 @admin_bp.route('/register', methods=['POST'])
 def register_admin():
     """Registers a new admin user."""
-    data = request.get_json()
-    if not data or not data.get('name') or not data.get('password') or not data.get('phone'):
-        return jsonify({"error": "Name, password, and phone are required."}), 400
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"error": "Request body cannot be empty."}), 400
+
+    errors = AdminSchema().validate(data)
+    if errors:
+        return jsonify({"errors": errors}), 400
 
     name = data.get('name')
-    password = data.get('password')
-    phone = data.get('phone')
 
     if mongo.db.admins.find_one({"name": name}):
         return jsonify({"error": "Admin with this name already exists."}), 409
@@ -48,8 +51,8 @@ def register_admin():
         
         mongo.db.admins.insert_one({
             "name": name,
-            "password": hashed_password,
-            "phone": phone,
+            "password": data['password'],
+            "phone": data['phone'],
             "role": "admin"  # Assign role on registration
         })
 
@@ -61,9 +64,13 @@ def register_admin():
 @admin_bp.route('/login', methods=['POST'])
 def login_admin():
     """Logs in an admin user and returns access/refresh tokens."""
-    data = request.get_json()
-    if not data or not data.get('name') or not data.get('password'):
-        return jsonify({"error": "Name and password are required."}), 400
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"error": "Request body cannot be empty."}), 400
+
+    errors = LoginSchema().validate(data)
+    if errors:
+        return jsonify({"errors": errors}), 400
 
     try:
         admin = mongo.db.admins.find_one({"name": data.get('name')})
@@ -148,7 +155,8 @@ def get_men_products():
         products = list(mongo.db.products.find({"gender": "Men"}))
         for product in products:
             product['_id'] = str(product['_id'])
-        return jsonify({"products": products}), 200
+        populated_products = _populate_admin_details(products)
+        return jsonify({"products": populated_products}), 200
     except Exception as e:
         logging.error(f"Error fetching men products: {e}")
         return jsonify({"error": "Internal server error."}), 500
@@ -160,7 +168,8 @@ def get_women_products():
         products = list(mongo.db.products.find({"gender": "Woman"}))
         for product in products:
             product['_id'] = str(product['_id'])
-        return jsonify({"products": products}), 200
+        populated_products = _populate_admin_details(products)
+        return jsonify({"products": populated_products}), 200
     except Exception as e:
         logging.error(f"Error fetching women products: {e}")
         return jsonify({"error": "Internal server error."}), 500
@@ -173,7 +182,8 @@ def get_product_by_id(id):
         if not product:
             return jsonify({"error": "Product not found."}), 404
         product['_id'] = str(product['_id'])
-        return jsonify({"product": product}), 200
+        populated_product = _populate_admin_details([product])
+        return jsonify({"product": populated_product[0]}), 200
     except Exception:
         return jsonify({"error": "Invalid product ID format."}), 400
 
