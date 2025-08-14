@@ -4,3 +4,6 @@ flask-pymongo
 flask-bcrypt
 python-dotenv
 PyJWT
+gunicorn
+flask-marshmallow
+marshmallow

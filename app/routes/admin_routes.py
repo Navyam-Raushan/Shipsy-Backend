@@ -10,6 +10,9 @@ from app.middlewares.jwt import (
     generate_access_token,
     generate_refresh_token
 )
+# Import the new schema for validation
+from app.schemas import ProductSchema
+
 
 admin_bp = Blueprint('admin_bp', __name__)
 
@@ -95,14 +98,14 @@ def login_admin():
 @admin_required
 def add_product():
     """Adds a new product, accessible only by admins."""
-    data = request.get_json()
-    required_fields = ['name', 'about', 'prize', 'gender', 'image']
-    if not all(field in data for field in required_fields):
-        return jsonify({"error": "All fields (name, about, prize, gender, image) are required."}), 400
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"error": "Request body cannot be empty."}), 400
 
-    if data['gender'] not in ['Men', 'Woman']:
-        return jsonify({"error": "Gender must be either 'Men' or 'Woman'."}), 400
-
+    # Validate incoming data using the Marshmallow schema
+    errors = ProductSchema().validate(data)
+    if errors:
+        return jsonify({"errors": errors}), 400
     try:
         new_product = {
             "name": data['name'],
