@@ -6,6 +6,13 @@ import logging
 import datetime
 from datetime import timezone
 
+# check post request with these credentials
+# {
+#     "name": "main_admin",
+#     "password": "a-strong-password-123"
+# }
+
+
 def jwt_auth_middleware(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -31,7 +38,7 @@ def generate_access_token(user_data):
     """Generates a short-lived access token."""
     payload = {
         **user_data,
-        "exp": datetime.datetime.now(timezone.utc) + datetime.timedelta(minutes=15),
+        "exp": datetime.datetime.now(timezone.utc) + datetime.timedelta(minutes=180),
         "iat": datetime.datetime.now(timezone.utc)
     }
     secret = current_app.config['JWT_SECRET']

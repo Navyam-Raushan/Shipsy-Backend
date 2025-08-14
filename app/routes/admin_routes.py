@@ -47,11 +47,12 @@ def register_admin():
         return jsonify({"error": "Admin with this name already exists."}), 409
 
     try:
+        password = data.get('password')
         hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
         
         mongo.db.admins.insert_one({
             "name": name,
-            "password": data['password'],
+            "password": hashed_password,
             "phone": data['phone'],
             "role": "admin"  # Assign role on registration
         })

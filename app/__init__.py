@@ -1,7 +1,7 @@
 # app/__init__.py
 from flask import Flask, jsonify
 from flask_cors import CORS
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 from app.config import Config
 from app.extensions import mongo, bcrypt, init_db
 import logging
@@ -24,7 +24,7 @@ def register_blueprints(app):
 
 def create_app():
     """Application factory function."""
-    load_dotenv()
+    # load_dotenv()
 
     # Configure basic logging
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')

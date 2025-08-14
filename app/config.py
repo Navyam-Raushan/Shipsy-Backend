@@ -8,5 +8,6 @@ class Config:
     REFRESH_TOKEN_SECRET = os.getenv("REFRESH_TOKEN_SECRET", "refresh_secret_here")
     MONGO_URI = "mongodb+srv://raushan:raushan123@shipsy-cluster.1keccqa.mongodb.net/shipsy-db?retryWrites=true&w=majority&appName=shipsy-cluster"
 
+    # MONGO_URI = os.getenv("MONGO_URI", "")
     CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:5173").split(',')
 
