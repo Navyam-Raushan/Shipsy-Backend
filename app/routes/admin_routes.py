@@ -1,7 +1,7 @@
 # app/routes/admin_routes.py
 from flask import Blueprint, request, jsonify, g
 from functools import wraps
-from bson.objectid import ObjectId
+from bson.objectid import ObjectId, InvalidId
 import logging
 
 from app.extensions import mongo, bcrypt
@@ -114,6 +114,11 @@ def add_product():
     errors = ProductSchema().validate(data)
     if errors:
         return jsonify({"errors": errors}), 400
+    
+    # Check for product name uniqueness before inserting
+    if mongo.db.products.find_one({"name": data['name']}):
+        return jsonify({"error": f"A product with the name '{data['name']}' already exists."}), 409
+
     try:
         new_product = {
             "name": data['name'],
@@ -193,12 +198,23 @@ def get_product_by_id(id):
 @admin_required
 def update_product(id):
     """Updates a product's details. Admin can only update their own products."""
-    data = request.get_json()
+    data = request.get_json(silent=True)
     if not data:
         return jsonify({"error": "Request body cannot be empty."}), 400
 
-    if 'gender' in data and data['gender'] not in ['Men', 'Woman']:
-        return jsonify({"error": "Gender must be either 'Men' or 'Woman'."}), 400
+    # Validate incoming data. `partial=True` allows for updating only some fields.
+    errors = ProductSchema(partial=True).validate(data)
+    if errors:
+        return jsonify({"errors": errors}), 400
+
+    # If the name is being updated, check if it conflicts with another product.
+    if 'name' in data:
+        existing_product = mongo.db.products.find_one({
+            "name": data['name'],
+            "_id": {"$ne": ObjectId(id)}  # Exclude the current product from the check
+        })
+        if existing_product:
+            return jsonify({"error": f"Another product with the name '{data['name']}' already exists."}), 409
 
     try:
         result = mongo.db.products.update_one(
@@ -208,7 +224,7 @@ def update_product(id):
         if result.matched_count == 0:
             return jsonify({"error": "Product not found or you don't have permission to update it."}), 404
         return jsonify({"message": "Product updated successfully."}), 200
-    except Exception:
+    except InvalidId:
         return jsonify({"error": "Invalid product ID format."}), 400
 
 @admin_bp.route('/products/delete/<string:id>', methods=['DELETE'])
@@ -221,5 +237,5 @@ def delete_product(id):
         if result.deleted_count == 0:
             return jsonify({"error": "Product not found or you don't have permission to delete it."}), 404
         return jsonify({"message": "Product deleted successfully."}), 200
-    except Exception:
+    except InvalidId:
         return jsonify({"error": "Invalid product ID format."}), 400
