@@ -6,3 +6,4 @@ load_dotenv()
 
 # The WSGI server will look for this 'application' variable
 application = create_app()
+
