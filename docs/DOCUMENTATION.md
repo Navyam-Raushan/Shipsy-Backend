@@ -21,7 +21,7 @@ This document serves as a central directory for all important documentation and 
 * **API Documentation with Postman:** [API Documentation](https://docs.google.com/document/d/1zVgy-7HOgIuXwvYxkkNFqZ8naiREti4UDvUV6I3LQwI/edit?usp=sharing)
 * **Architecture Documentation:** [Architectural Details and module breakdown](https://docs.google.com/document/d/1Aws4tePcvNHySrpe1XdkysirkLA3pOsWnxJYASIAYpU/edit?usp=sharing)
 * **AI Documentation:** [AI DOCS WITH PROMPT USAGE](https://docs.google.com/document/d/159xypcGJSTfPKRrmz9BtOtX8syXOwrueOPZg7nZ29TQ/edit?usp=sharing)
-* **Demo Video:** [Open in Drive](link)
+* **Demo Video:** [Open in Drive](https://drive.google.com/file/d/1aWaCx6QxhCPmB-VKIjE8EXRMaDoZqJnY/view?usp=sharing)
 
 
 ---
